@@ -1,11 +1,39 @@
 import streamlit as st
+import google.generativeai as genai
+
+# ---------------- CONFIG ---------------- #
 
 st.set_page_config(page_title="BESCOM Smart Chatbot", page_icon="⚡")
 
-st.title("⚡ BESCOM Smart Energy Chatbot")
-st.subheader("Your Personal Electricity Bill Assistant")
+# ---------------- LOGIN SYSTEM (FAKE) ---------------- #
 
-st.write("Ask about your bill, savings, appliances or peak hours.")
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if not st.session_state.logged_in:
+    st.title("🔐 BESCOM Smart Chatbot Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        if username and password:
+            st.session_state.logged_in = True
+            st.success("Login Successful!")
+        else:
+            st.error("Enter Username and Password")
+
+    st.stop()
+
+# ---------------- MAIN PAGE ---------------- #
+
+st.title("⚡ BESCOM Smart Energy Chatbot")
+st.subheader("Electricity Bill Assistant & AI Support")
+
+# ---------------- GEMINI API ---------------- #
+
+API_KEY = "AIzaSyASMX7HMF5ewHscAUgLnDrnp5x18NF0vMw"
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel("gemini-pro")
 
 # ---------------- BILL CALCULATION ---------------- #
 
@@ -17,82 +45,89 @@ def calculate_bill(units):
     else:
         return (100 * 4) + (100 * 6) + ((units - 200) * 8)
 
-# ---------------- SIDEBAR MENU ---------------- #
+# ---------------- SIDEBAR ---------------- #
 
 option = st.sidebar.selectbox(
-    "Select Option",
-    ["Bill Calculator", "Appliance Calculator", "Reduce My Bill Plan", "Peak Hour Advice"]
+    "Choose Option",
+    ["Bill Calculator",
+     "Appliance Calculator",
+     "Reduce My Bill Plan",
+     "Peak Hour Advice",
+     "Ask Questions (AI Chatbot)"]
 )
 
-# ---------------- BILL CALCULATOR ---------------- #
+# ---------------- EXISTING FEATURES ---------------- #
 
 if option == "Bill Calculator":
-    st.header("📊 Electricity Bill Calculator")
-    units = st.number_input("Enter Units Consumed This Month:", min_value=0)
-
+    units = st.number_input("Enter Units Consumed:", min_value=0)
     if st.button("Calculate Bill"):
         bill = calculate_bill(units)
         st.success(f"Estimated Bill: ₹ {bill}")
 
-# ---------------- APPLIANCE CALCULATOR ---------------- #
-
 elif option == "Appliance Calculator":
-    st.header("🔌 Appliance Cost Calculator")
+    ac = st.number_input("AC usage (hours/day):", min_value=0)
+    geyser = st.number_input("Geyser usage (hours/day):", min_value=0)
+    wm = st.number_input("Washing Machine usage (hours/day):", min_value=0)
 
-    ac_hours = st.number_input("AC Usage (hours per day):", min_value=0)
-    geyser_hours = st.number_input("Geyser Usage (hours per day):", min_value=0)
-    wm_hours = st.number_input("Washing Machine Usage (hours per day):", min_value=0)
-
-    if st.button("Calculate Appliance Cost"):
-
-        ac_units = (1.5 * ac_hours * 30)
-        geyser_units = (2 * geyser_hours * 30)
-        wm_units = (0.5 * wm_hours * 30)
-
-        total_units = ac_units + geyser_units + wm_units
-        bill = calculate_bill(total_units)
-
-        st.success(f"Estimated Units: {round(total_units)} units")
-        st.success(f"Estimated Cost: ₹ {round(bill)}")
-
-# ---------------- REDUCE BILL PLAN ---------------- #
+    if st.button("Estimate Cost"):
+        total_units = (1.5*ac*30) + (2*geyser*30) + (0.5*wm*30)
+        cost = calculate_bill(total_units)
+        st.success(f"Estimated Units: {round(total_units)}")
+        st.success(f"Estimated Cost: ₹ {round(cost)}")
 
 elif option == "Reduce My Bill Plan":
-    st.header("💡 Personalized Bill Reduction Plan")
-
     st.info("""
-    🔹 Set AC temperature to 26°C  
-    🔹 Limit AC usage to 5 hours/day  
-    🔹 Use washing machine only 3 times/week  
-    🔹 Reduce geyser usage to 30–45 minutes  
-    🔹 Replace all bulbs with LED  
-    🔹 Switch off standby devices  
+    ✔ Set AC to 26°C  
+    ✔ Use AC only 5 hours/day  
+    ✔ Avoid peak hours (6PM–10PM)  
+    ✔ Use LED bulbs  
+    ✔ Reduce geyser to 30 mins  
     """)
-
-    st.success("Estimated Monthly Savings: ₹500 – ₹900")
-
-# ---------------- PEAK HOUR ADVICE ---------------- #
+    st.success("Estimated Savings: ₹500–₹900 per month")
 
 elif option == "Peak Hour Advice":
-    st.header("⏰ Peak & Off-Peak Hour Guidance")
+    st.warning("⚠ Peak Hours: 6PM–10PM")
+    st.success("✅ Best Time: 10AM–4PM for heavy appliances")
 
-    st.warning("""
-    ⚠ Peak Hours: 6PM – 10PM  
-    Avoid using:
-    - AC
-    - Iron Box
-    - Water Heater
-    - Washing Machine
-    """)
+# ---------------- AI CHATBOT SECTION ---------------- #
 
-    st.success("""
-    ✅ Off-Peak Hours: 10AM – 4PM  
-    Best time to use:
-    - Washing Machine
-    - Dishwasher
-    - Water Pump
-    - Heavy Appliances
-    """)
+elif option == "Ask Questions (AI Chatbot)":
 
-st.markdown("---")
-st.caption("Developed as Smart Energy Management System for BESCOM")
+    st.header("🤖 BESCOM AI Assistant")
+
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    user_question = st.text_input("Ask your electricity-related question:")
+
+    if st.button("Ask"):
+        if user_question:
+
+            # Restrict to BESCOM electricity topics
+            prompt = f"""
+            You are a BESCOM Electricity Support Assistant.
+            Only answer questions related to:
+            - Electricity bills
+            - BESCOM services
+            - Energy saving tips
+            - Appliance usage
+            - Peak hour advice
+            - Electricity tariff
+
+            If question is unrelated, reply:
+            "This question is not part of BESCOM Smart Chatbot services."
+
+            Question: {user_question}
+            """
+
+            response = model.generate_content(prompt)
+
+            st.session_state.chat_history.append(("You", user_question))
+            st.session_state.chat_history.append(("Bot", response.text))
+
+    # Display Chat
+    for speaker, message in st.session_state.chat_history:
+        if speaker == "You":
+            st.markdown(f"**🧑 You:** {message}")
+        else:
+            st.markdown(f"**⚡ Bot:** {message}")
