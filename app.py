@@ -112,23 +112,6 @@ elif option == "Ask Questions (AI Chatbot)":
 
 
         
-        elif option == "login page":
-            if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-if not st.session_state.logged_in:
-    st.title("🔐 BESCOM Smart Chatbot Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        if username and password:
-            st.session_state.logged_in = True
-            st.success("Login Successful!")
-        else:
-            st.error("Enter Username and Password")
-
-    st.stop()
 
     # Display Chat
     for speaker, message in st.session_state.chat_history:
