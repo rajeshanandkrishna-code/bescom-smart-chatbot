@@ -10,7 +10,7 @@ st.set_page_config(page_title="BESCOM Smart Chatbot", layout="wide")
 # ------------------------------
 # Add your Gemini API key here
 # ------------------------------
-API_KEY = "AIzaSyDDzbktcAkffT1vklka2G2MtPRk1-D33Ek"
+API_KEY = st.secrets["AIzaSyDDzbktcAkffT1vklka2G2MtPRk1-D33Ek"]
 genai.configure(api_key=API_KEY)
 
 model = genai.GenerativeModel("gemini-1.5-flash")
@@ -120,24 +120,27 @@ elif menu == "Ask Questions (AI Chatbot)":
 
         if user_question.strip() == "":
             st.warning("Please enter a question.")
-
         else:
 
-            # Restrict non-BESCOM questions
-            allowed_keywords = [
-                "bescom", "electricity", "bill", "units",
-                "meter", "tariff", "power", "energy",
-                "peak hours", "slab", "consumption"
-            ]
+            try:
+                prompt = f"""
+                You are a BESCOM Electricity Support Assistant.
 
-            if not any(keyword in user_question.lower() for keyword in allowed_keywords):
-                st.error("This question is not part of BESCOM Smart Chatbot services.")
-            else:
-                try:
-                    response = model.generate_content(
-                        f"Answer only about BESCOM electricity services and bill reduction. Question: {user_question}"
-                    )
-                    st.success(response.text)
-                except:
-                    st.error("Error generating response. Check API key.")
+                If the question is related to electricity, appliances,
+                energy usage, current, voltage, bill calculation,
+                or BESCOM services — answer properly.
+
+                If the question is unrelated (like sports, movies, politics),
+                reply exactly:
+                "This question is not part of BESCOM Smart Chatbot services."
+
+                Question: {user_question}
+                """
+
+                response = model.generate_content(prompt)
+                st.success(response.text)
+
+            except:
+                st.error("Error generating response. Check API key.")
+
 
