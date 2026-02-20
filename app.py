@@ -10,7 +10,7 @@ st.set_page_config(page_title="BESCOM Smart Chatbot", layout="wide")
 # ------------------------------
 # Add your Gemini API key here
 # ------------------------------
-API_KEY = st.secrets["AIzaSyDDzbktcAkffT1vklka2G2MtPRk1-D33Ek"]
+API_KEY = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=API_KEY)
 
 model = genai.GenerativeModel("gemini-1.5-flash")
